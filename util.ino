@@ -11,7 +11,6 @@ void UPGRADE_SYSTEM() {
   picoOTA.commit();
   LittleFS.end();
   debugln("Reboot in progress.....");
-  rp2040.reboot();
 }
 
 bool Task::run() {
@@ -62,7 +61,13 @@ void Watchdog::loop() {
 }
 
 void Watchdog::petWatchdog() {
+  if (resetFlag)
     rp2040.wdt_reset();
+}
+
+void Watchdog::reboot() {
+  petWatchdog();
+  resetFlag = false;
 }
 
 #ifdef BLINK

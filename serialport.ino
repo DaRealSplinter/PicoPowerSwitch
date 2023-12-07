@@ -151,12 +151,9 @@ void deleteFile() {
   char* value;
   debugln();
   value = serialCmd.ReadNext();
-  if (value != NULL)
-  {
+  if (value != NULL) {
     _files->deleteFile(value);
-  }
-  else
-  {
+  } else {
     help();
   }
 }

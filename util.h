@@ -43,14 +43,16 @@ private:
 class Watchdog : protected Task {
 public:
   Watchdog(uint32_t timeout = 8300, uint32_t petCycle = 1000)
-    : watchdogTimeout(timeout), watchdogPetCycle(petCycle){};
+    : watchdogTimeout(timeout), watchdogPetCycle(petCycle), resetFlag(true){};
   void setup();
   void loop();
   void petWatchdog();
+  void reboot();
 private:
   Mutex mutex;
   uint32_t watchdogTimeout;
   uint32_t watchdogPetCycle;
+  bool resetFlag;
 };
 
 class Blink : protected Task {

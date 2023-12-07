@@ -201,6 +201,14 @@ void PowerServer::sendConfigPage(HTMLBuilder* html, EthernetModule* ethernet, EE
 
 void PowerServer::sendServerPage(HTMLBuilder* html, EthernetModule* ethernet, EEpromMemory* memory, Gpio* gpio) {
   sendPageBegin(html, ethernet);
+  String versionString = "Ver. " + String(PROGRAM_NUMBER) + String(".") + String(PROGRAM_VERSION_MAJOR) + String(".") + String(PROGRAM_VERSION_MINOR);
+
+  html->println("<h2>");
+  html->println(APP_NAME);
+  html->println("</h2><table class=\"center\"> <tr><td>" + versionString + "</td></tr>");
+  html->println("<tr><td>Author: John J. Gavel</td></tr></table>");
+  html->println();
+
   html->println("<h2>MAC Address</h2><table class=\"center\"> <tr><td>MAC Address:</td><td>" + String(memory->mem.mem.macAddress[0], HEX) + String(":") + String(memory->mem.mem.macAddress[1], HEX) + String(":") + String(memory->mem.mem.macAddress[2], HEX) + String(":") + String(memory->mem.mem.macAddress[3], HEX) + String(":") + String(memory->mem.mem.macAddress[4], HEX) + String(":") + String(memory->mem.mem.macAddress[5], HEX) + "</td></tr></table>");
   html->println("<h2>IP Configuration</h2><table class=\"center\">");
   html->print("<tr><td>IP Configuration:</td><td>" + String((memory->mem.mem.isDHCP) ? "DHCP" : "Static") + "</td></tr>");
@@ -235,8 +243,8 @@ void PowerServer::sendServerPage(HTMLBuilder* html, EthernetModule* ethernet, EE
   html->println("<tr><td>Ethernet</td><td>" + String((gpio->getOnline(4)) ? "ON" : "OFF") + "</td>");
   html->println("<tr><td>EEPROM</td><td>" + String((gpio->getOnline(5)) ? "ON" : "OFF") + "</td>");
   html->println("</table>");
-  html->println("<a href=\"/ipconfig\">Configure IP Addresses</a>");
-  //html->println("<a href=\"/upload\">Upload File</a>");
+  html->println("<tr><a href=\"/ipconfig\">Configure IP Addresses</a></tr>");
+  html->println("<br><tr><a href=\"/upgrade\">Upgrade the Power Switch</a></tr>");
   html->println("<table class=\"center\">");
   html->println("<td><a href=\"/\"><button type=\"button\" class=\"button2 button\">Cancel</button></a></td></tr>");
   html->println("</table>");
@@ -252,7 +260,7 @@ static char* subStringAfterQuestion(char* action) {
   return returnString;
 }
 
-void PowerServer::sendProcessHTMLPage(HTMLBuilder* html, EthernetModule* ethernet, String action, int timeout) {
+void PowerServer::sendProcessHTMLPage(HTMLBuilder* html, EthernetModule* ethernet, String action, unsigned int timeout) {
   sendPageBegin(html, ethernet, true, timeout);
   html->print("<p>");
   html->print(action);
@@ -390,6 +398,7 @@ void PowerServer::sendUploadPage(HTMLBuilder* html, EthernetModule* ethernet, St
   html->println("<input id=\"file\" name=\"file\" type=\"file\" />");
   html->println("<button>Upload</button>");
   html->println("</form><br>");
+  html->println("<td><a href=\"/server\"><button type=\"button\" class=\"button2 button\">Cancel</button></a></td></tr><br>");
   sendPageEnd(html);
   client.write(html->buffer(), html->length());
 }
@@ -476,7 +485,7 @@ void PowerServer::processHeader(EthernetModule* ethernet, EEpromMemory* memory, 
     sendUploadPage(&html, ethernet);
   } else if (headerStringUpgrade.equals(String(action))) {
     //debug("Get Upgrade");
-    sendUploadPage(&html, ethernet, "<h2>OTA Upgrade<h2/><br><h3>Reset the Module 10 seconds after completion.<h3/>");
+    sendUploadPage(&html, ethernet, "<h2>OTA Upgrade<h2/>");
   } else if (minimalist) {
     client.write(html.buffer(), html.length());
   } else if ((String(action)).startsWith(headerStringMain)) {
@@ -654,8 +663,9 @@ void PowerServer::processPost(EthernetModule* ethernet, Watchdog* watchdog, char
         sendProcessHTMLPage(&html, ethernet, "Processing File Upload FAILED....");
     } else if (upgradeFileFlag) {
       if (state == UPLOAD_DONE) {
-        sendProcessHTMLPage(&html, ethernet, "Processing File Upgrade....", 30);
+        sendProcessHTMLPage(&html, ethernet, "Processing File Upgrade....", 20);
         UPGRADE_SYSTEM();
+        watchdog->reboot();
       } else
         sendProcessHTMLPage(&html, ethernet, "Processing File Upgrade FAILED....");
     } else {

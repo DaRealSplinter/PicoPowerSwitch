@@ -22,7 +22,7 @@ private:
   void sendPowerPage(HTMLBuilder* html, EthernetModule* ethernet, Temperature* temperature, EEpromMemory* memory, Gpio* gpio, bool fastRefresh);
   void sendConfigPage(HTMLBuilder* html, EthernetModule* ethernet, EEpromMemory* memory);
   void sendConfigIPPage(HTMLBuilder* html, EthernetModule* ethernet, EEpromMemory* memory);
-  void sendProcessHTMLPage(HTMLBuilder* html, EthernetModule* ethernet, String action, int timeout = 3);
+  void sendProcessHTMLPage(HTMLBuilder* html, EthernetModule* ethernet, String action, unsigned int timeout = 3);
   void sendProcessPage(HTMLBuilder* html, EthernetModule* ethernet, EEpromMemory* memory, char* action);
   void sendProcessIPPage(HTMLBuilder* html, EthernetModule* ethernet, EEpromMemory* memory, char* action);
   void sendServerPage(HTMLBuilder* html, EthernetModule* ethernet, EEpromMemory* memory, Gpio* gpio);

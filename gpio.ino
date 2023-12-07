@@ -57,7 +57,7 @@ void Gpio::loop(Output* output, Data* data) {
       }
       relayStatus[i] = status;
 #ifdef BACKUP_INDICATORS
-        debugStatus[i+1] = status;
+      debugStatus[i + 1] = status;
 #endif
     }
     for (int i = 0; i < MONITOR_DEVICES; i++) {

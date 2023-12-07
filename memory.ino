@@ -87,8 +87,8 @@ void EEpromMemory::setup(Gpio* gpio) {
     breakSeal();
   }
   if ((mem.mem.programVersionMinor != PROGRAM_VERSION_MINOR)) {
-     mem.mem.programVersionMinor = PROGRAM_VERSION_MINOR;
-     breakSeal();
+    mem.mem.programVersionMinor = PROGRAM_VERSION_MINOR;
+    breakSeal();
   }
   if (!connected) debugln("EEPROM Not Connected");
   gpio->setOnline(I2C_EEPROM, connected);
