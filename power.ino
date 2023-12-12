@@ -45,7 +45,7 @@ Mutex startupMutex;
 Mutex startupMutex1;
 
 void setup() {
-  //rp2040.enableDoubleResetBootloader();
+  rp2040.enableDoubleResetBootloader();
   startupMutex.take();
   Wire.begin();
 

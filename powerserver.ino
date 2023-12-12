@@ -729,5 +729,5 @@ void PowerServer::loop(EthernetModule* ethernet, EEpromMemory* memory, Gpio* gpi
 #pragma GCC warning "No Server Module Included"
 
 void PowerServer::setup(Files* f){};
-void PowerServer::loop(EthernetModule* ethernet, EEpromMemory* memory, Gpio* gpio, Screen* screen, Temperature* temperature, Watchdog* watchdog){};
+void PowerServer::loop(EthernetModule* ethernet, EEpromMemory* memory, Gpio* gpio, Temperature* temperature, Watchdog* watchdog){};
 #endif

@@ -569,6 +569,7 @@ void prompt() {
 
 #else
 #pragma GCC warning "No Serial Port Command Server Included"
-void SerialPort::setup(Scan* scan, EEpromMemory* eepromMemory, Gpio* gpioControl, Screen* oledscreen, Temperature* tempStatus, Watchdog* watchdog){};
+void SerialPort::setup(Scan* scan, EEpromMemory* eepromMemory, Gpio* gpioControl, Screen* oledscreen, Temperature* tempStatus, Watchdog* watchdog, Files* files){};
 void SerialPort::loop(){};
+void SerialPort::complete() {};
 #endif
