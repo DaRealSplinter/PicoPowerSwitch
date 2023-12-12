@@ -1,8 +1,6 @@
 #ifdef TEMPERATURE
 #include "temperature.h"
 
-#define DRIFT 0
-
 bool Temperature::validTemperature() {
   return validTemp;
 }

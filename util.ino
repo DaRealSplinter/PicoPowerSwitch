@@ -101,8 +101,8 @@ void Files::setup() {
   if (LittleFS.begin())
     debugln("File System Complete");
   else debugln("File System FAILED");
-  deleteFile(UPGRADE_COMMAND_FILE_NAME);
-  deleteFile(UPGRADE_FILE_NAME);
+  if (LittleFS.exists(UPGRADE_COMMAND_FILE_NAME)) deleteFile(UPGRADE_COMMAND_FILE_NAME);
+  if (LittleFS.exists(UPGRADE_FILE_NAME)) deleteFile(UPGRADE_FILE_NAME);
 }
 
 File Files::getFile(String path) {
