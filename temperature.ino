@@ -26,11 +26,13 @@ void Temperature::loop() {
 }
 
 int Temperature::readTemperature() {
-  temp = (dht.readTemperature(true) + _memory->mem.mem.drift);
-  if ((temp < 0) || (temp > 150)) {
-    validTemp = false;
+  int value;
+  value = ((int)dht.readTemperature(true) + _memory->mem.mem.drift);
+  if ((value < 0) || (value > 150)) {
+    //validTemp = false;
   } else {
     validTemp = true;
+    temp = value;
   }
   _gpio->setOnline(DHT_11, validTemp);
   return temp;

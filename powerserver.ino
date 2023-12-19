@@ -82,6 +82,7 @@ void PowerServer::sendPageEnd(HTMLBuilder* html) {
   html->println("<footer><p>");
   html->println(APP_NAME);
   html->println("<br>" + versionString);
+  html->println("<br>Build Date: " + String(compileDate) + " Time: " + String(compileTime));
   html->println("<br>Author: John J. Gavel<br>");
   html->println("</p></footer>");
   html->println("</body></html>");
@@ -206,6 +207,7 @@ void PowerServer::sendServerPage(HTMLBuilder* html, EthernetModule* ethernet, EE
   html->println("<h2>");
   html->println(APP_NAME);
   html->println("</h2><table class=\"center\"> <tr><td>" + versionString + "</td></tr>");
+  html->println("<tr><td>Build Date: " + String(compileDate) + " Time: " + String(compileTime) + "</td></tr>");
   html->println("<tr><td>Author: John J. Gavel</td></tr></table>");
   html->println();
 
@@ -383,10 +385,10 @@ bool PowerServer::receiveFile(Watchdog* watchdog, File* file, unsigned int bytes
     watchdog->petWatchdog();
     delay(10);
   }
-  debug("Received File: ");
-  debug(String(total));
-  debug("/");
-  debugln(String(bytes));
+  //debug("Received File: ");
+  //debug(String(total));
+  //debug("/");
+  //debugln(String(bytes));
   return (total == bytes);
 }
 

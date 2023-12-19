@@ -519,6 +519,7 @@ void banner() {
   debug(String(_memory->mem.mem.programVersionMinor));
   debug(" Num Dev: ");
   debugln(String(_memory->mem.mem.numberOfDevices));
+  debugln("Build Date: " + String(compileDate) + " Time: " + String(compileTime));
   debugln();
   debug("Microcontroller: Raspberry Pi Pico");
   (rp2040.isPicoW()) ? debugln("W") : debugln();
@@ -571,5 +572,6 @@ void prompt() {
 #pragma GCC warning "No Serial Port Command Server Included"
 void SerialPort::setup(Scan* scan, EEpromMemory* eepromMemory, Gpio* gpioControl, Screen* oledscreen, Temperature* tempStatus, Watchdog* watchdog, Files* files){};
 void SerialPort::loop(){};
-void SerialPort::complete() {};
+void SerialPort::complete(){};
+void SerialPort::banner(){};
 #endif

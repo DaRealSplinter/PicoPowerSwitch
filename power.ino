@@ -11,6 +11,8 @@
 #include "powerserver.h"
 
 #define APP_NAME "Pico Power Switch"
+const char* compileDate = __DATE__;
+const char* compileTime = __TIME__;
 
 #define DEBUG
 #define SERIALPORT
@@ -45,7 +47,7 @@ Mutex startupMutex;
 Mutex startupMutex1;
 
 void setup() {
-  rp2040.enableDoubleResetBootloader();
+  //rp2040.enableDoubleResetBootloader();
   startupMutex.take();
   Wire.begin();
 
