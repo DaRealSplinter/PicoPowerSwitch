@@ -3,6 +3,7 @@ Utilized Arduino IDE 2.2.1 to build project.
 
 ## Board:
   Raspberry Pi Pico/RP2040 3.7.0
+### Board Setup
   
 ## External Libraries:
   - Adafruit BusIO 1.15.0
