@@ -8,16 +8,16 @@ void Gpio::setup() {
 
   TCA1.begin();
   for (int i = 0; i < NUM_DEVICES; i++) {
-    TCA1.pinMode(relayStatusPins[i], INPUT);
-    relayStatus[i] = TCA1.digitalRead(relayStatusPins[i]);
+    TCA1.pinMode1(relayStatusPins[i], INPUT);
+    relayStatus[i] = TCA1.read1(relayStatusPins[i]);
     commandStatus[i] = false;
-    TCA1.digitalWrite(commandRelayPins[i], LOW);
-    TCA1.pinMode(commandRelayPins[i], OUTPUT);
+    TCA1.write1(commandRelayPins[i], LOW);
+    TCA1.pinMode1(commandRelayPins[i], OUTPUT);
   }
   for (int i = 0; i < MONITOR_DEVICES; i++) {
     onlineStatus[i] = false;
-    TCA1.pinMode(onlineStatusPins[i], OUTPUT);
-    TCA1.digitalWrite(onlineStatusPins[i], HIGH);
+    TCA1.pinMode1(onlineStatusPins[i], OUTPUT);
+    TCA1.write1(onlineStatusPins[i], HIGH);
   }
   for (int i = 0; i < DEBUG_LEDS; i++) {
     debugStatus[i] = false;
@@ -31,9 +31,9 @@ void Gpio::setup() {
 
 void Gpio::testOutput(unsigned int pin) {
   mutex->take();
-  TCA1.digitalWrite(pin, HIGH);
+  TCA1.write1(pin, HIGH);
   delay(500);
-  TCA1.digitalWrite(pin, LOW);
+  TCA1.write1(pin, LOW);
   mutex->give();
 }
 
@@ -62,7 +62,7 @@ void Gpio::loop(Output* output, Data* data) {
     }
     for (int i = 0; i < MONITOR_DEVICES; i++) {
       mutex->take();
-      TCA1.digitalWrite(onlineStatusPins[i], !onlineStatus[i]);
+      TCA1.write1(onlineStatusPins[i], !onlineStatus[i]);
       mutex->give();
     }
     for (int i = 0; i < DEBUG_LEDS; i++) {
@@ -82,13 +82,13 @@ void Gpio::loop(Output* output, Data* data) {
 }
 
 byte Gpio::readRelay(int device) {
-  return TCA1.digitalRead(relayStatusPins[device]);
+  return TCA1.read1(relayStatusPins[device]);
 }
 
 void Gpio::commandRelay(int device) {
-  TCA1.digitalWrite(commandRelayPins[device], HIGH);
+  TCA1.write1(commandRelayPins[device], HIGH);
   delay(500);
-  TCA1.digitalWrite(commandRelayPins[device], LOW);
+  TCA1.write1(commandRelayPins[device], LOW);
 }
 
 void Gpio::setRelay(int relay, bool state) {
