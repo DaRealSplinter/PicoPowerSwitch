@@ -36,7 +36,20 @@ github.com/AlDanial/cloc v 1.74  T=0.22 s (91.6 files/s, 14486.3 lines/s)
 ## Board
   Raspberry Pi Pico/RP2040 3.7.0
 ### Board Setup
-  
+  - Debug Level - None
+  - Debug Port - Disabled
+  - C++ Exceptions - Disabled
+  - Flash Size - 2MB (Sketch: 1536KB, FS: 512KB)
+  - CPU Speed - 133 MHz
+  - IP/Bluetooth Stack - IPv4 Only
+  - Optimize - Small (-Os)(standard)
+  - RTTI - Disabled
+  - Stack Protector - Disabled
+  - Upload Method - Default (UF2)
+  - USB Stack - Pico SDK
+### Little FS Upload Tool
+[PicoLittleFS](https://github.com/earlephilhower/arduino-pico-littlefs-plugin/releases) - PicoLittleFS is a tool which integrates into the Arduino IDE. It adds a menu item to Tools menu for uploading the contents of sketch data directory into a new LittleFS flash file system.
+
 ## External Libraries:
   - Adafruit BusIO 1.15.0
   - Adafruit GFX Library 1.11.9
