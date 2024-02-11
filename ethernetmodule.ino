@@ -36,7 +36,7 @@ bool EthernetModule::setupW5500() {
   status &= resetW5500();
   Ethernet.init(17);
   if (_memory->mem.mem.isDHCP) {
-    Ethernet.begin(_memory->mem.mem.macAddress);
+    Ethernet.begin(_memory->mem.mem.macAddress, 3000, 1500);
     saveIPData();
   } else {
     Ethernet.begin(_memory->mem.mem.macAddress, _memory->mem.mem.ipAddress, _memory->mem.mem.dnsAddress, _memory->mem.mem.gatewayAddress, _memory->mem.mem.subnetMask);
