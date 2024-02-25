@@ -1,5 +1,5 @@
 # Pico Power Switch
-Utilized Arduino IDE 2.2.1 to build project.
+Utilized Arduino IDE 2.3.2 to build project.
 ## File Statistics
 22 text files.  
 classified 22 files  
@@ -10,16 +10,16 @@ github.com/AlDanial/cloc v 1.74  T=0.22 s (91.6 files/s, 14486.3 lines/s)
 
 | File                                                                          | blank        | comment           | code| 
 | ----------------------------------------------------------------------------- | ------------ | ----------------- | --- |
-| /home/arduino/Arduino/PicoPowerSwitch/power/powerserver.ino                   |    52        |      31           |  652| 
-| /home/arduino/Arduino/PicoPowerSwitch/power/serialport.ino                    |    37        |       0           |  540| 
+| /home/arduino/Arduino/PicoPowerSwitch/power/powerserver.ino                   |    52        |      31           |  651| 
+| /home/arduino/Arduino/PicoPowerSwitch/power/serialport.ino                    |    42        |       0           |  621| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/util.ino                          |    49        |       3           |  236| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/bitmap.h                          |     6        |       5           |  206| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/gpio.ino                          |    17        |       1           |  158| 
-| /home/arduino/Arduino/PicoPowerSwitch/power/ethernetmodule.ino                |    18        |       0           |  145| 
-| /home/arduino/Arduino/PicoPowerSwitch/power/memory.ino                        |    14        |      18           |  141| 
+| /home/arduino/Arduino/PicoPowerSwitch/power/ethernetmodule.ino                |    18        |       0           |  149| 
+| /home/arduino/Arduino/PicoPowerSwitch/power/memory.ino                        |    14        |      18           |  137| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/screen.ino                        |    15        |       4           |  132| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/util.h                            |    16        |       0           |  125| 
-| /home/arduino/Arduino/PicoPowerSwitch/power/power.ino                         |    15        |       3           |   89| 
+| /home/arduino/Arduino/PicoPowerSwitch/power/power.ino                         |    15        |       4           |   88| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/memory.h                          |     7        |       0           |   59| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/powerserver.h                     |     3        |       0           |   52| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/gpio.h                            |     6        |       0           |   51| 
@@ -28,13 +28,13 @@ github.com/AlDanial/cloc v 1.74  T=0.22 s (91.6 files/s, 14486.3 lines/s)
 | /home/arduino/Arduino/PicoPowerSwitch/power/defines.h                         |    19        |      12           |   31| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/ethernetmodule.h                  |     4        |       0           |   27| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/temperature.h                     |     3        |       0           |   24| 
-| /home/arduino/Arduino/PicoPowerSwitch/power/serialport.h                      |     6        |       0           |   21| 
+| /home/arduino/Arduino/PicoPowerSwitch/power/serialport.h                      |     7        |       0           |   42| 
 | /home/arduino/Arduino/PicoPowerSwitch/power/.theia/launch.json                |     1        |       0           |    7| 
 | | | | | 
-| SUM:                                                                          |   301        |      84           | 2778| 
+| SUM:                                                                          |   307        |      85           | 2878| 
 
 ## Board
-  Raspberry Pi Pico/RP2040 3.7.0
+  Raspberry Pi Pico/RP2040 3.7.2
 ### Board Setup
   - Debug Level - None
   - Debug Port - Disabled
