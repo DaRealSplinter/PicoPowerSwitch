@@ -14,7 +14,7 @@
 const char* compileDate = __DATE__;
 const char* compileTime = __TIME__;
 
-#define DEBUG
+//#define DEBUG
 #define SERIALPORT
 #define ETHERNET
 #define ETHERNET_SERVER
@@ -51,10 +51,10 @@ void setup() {
   startupMutex.take();
   Wire.begin();
 
-  debugSetup();
-  debugln();
-  debugln("************************************************************");
-  debugln(APP_NAME + String(" ") + String(PROGRAM_NUMBER) + String(".") + String(PROGRAM_VERSION_MAJOR) + String(".") + String(PROGRAM_VERSION_MINOR));
+  serialSetup();
+  println();
+  println(PROMPT, "************************************************************");
+  println(INFO, APP_NAME + String(" ") + String(PROGRAM_NUMBER) + String(".") + String(PROGRAM_VERSION_MAJOR) + String(".") + String(PROGRAM_VERSION_MINOR));
 
   blink.setup();
   port.setup(&scanner, &memory, &gpio, &screen, &temperature, &watchdog, &files);
@@ -74,8 +74,8 @@ void setup() {
   startupMutex1.give();
 
   gpio.setOnline(PICO, true);
-  debugln(APP_NAME + String(" - Startup Complete"));
-  debugln("************************************************************");
+  println(PASSED, APP_NAME + String(" - Startup Complete"));
+  println(PROMPT, "************************************************************");
   port.complete();
 }
 

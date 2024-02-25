@@ -3,17 +3,39 @@
 #include "gpio.h"
 #include "screen.h"
 
-#ifndef __DEBUG
-#define __DEBUG
-
-void debugSetup();
-void debug(String line);
-void debugln(String line);
-
-#endif
-
 #ifndef __SERIAL
 #define __SERIAL
+
+typedef enum {
+  TRACE,
+  INFO,
+  WARNING,
+  ERROR,
+  HELP,
+  PASSED,
+  FAILED,
+  PROMPT
+} PRINT_TYPES;
+
+typedef enum {
+  Normal = 0,
+  Black = 30,
+  Red,
+  Green,
+  Yellow,
+  Blue,
+  Magenta,
+  Cyan,
+  White
+} COLOR;
+
+
+void debugSetup();
+void println();
+void print(PRINT_TYPES type, String line);
+void print(PRINT_TYPES type, String line, String line2);
+void println(PRINT_TYPES type, String line);
+void println(PRINT_TYPES type, String line, String line2);
 
 class SerialPort {
 public:

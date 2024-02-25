@@ -4,13 +4,13 @@
 #include "serialport.h"
 
 void UPGRADE_SYSTEM() {
-  debugln();
-  debugln("Starting Upgrade Process.....");
+  println();
+  println(WARNING, "Starting Upgrade Process.....");
   picoOTA.begin();
   picoOTA.addFile(UPGRADE_FILE_NAME);
   picoOTA.commit();
   LittleFS.end();
-  debugln("Reboot in progress.....");
+  println(WARNING, "Reboot in progress.....");
 }
 
 bool Task::run() {
@@ -99,8 +99,8 @@ void Cylon::loop(){};
 
 void Files::setup() {
   if (LittleFS.begin())
-    debugln("File System Complete");
-  else debugln("File System FAILED");
+    println(PASSED, "File System Complete");
+  else println(FAILED, "File System FAILED");
   if (LittleFS.exists(UPGRADE_COMMAND_FILE_NAME)) deleteFile(UPGRADE_COMMAND_FILE_NAME);
   if (LittleFS.exists(UPGRADE_FILE_NAME)) deleteFile(UPGRADE_FILE_NAME);
 }
@@ -109,7 +109,7 @@ File Files::getFile(String path) {
   File file;
   if (LittleFS.exists(path)) {
     file = LittleFS.open(path, "r");
-  } else debugln("FS ERROR: " + path + " file does not exist!!!!");
+  } else println(ERROR, "FS: " + path + " file does not exist!!!!");
 
   return file;
 }
@@ -118,14 +118,14 @@ void Files::deleteFile(String path) {
   File file;
   if (LittleFS.exists(path)) {
     LittleFS.remove(path);
-    debugln(path + String(" file deleted."));
-  } else debugln("FS ERROR: " + path + " file does not exist!!!!");
+    println(INFO, path + String(" file deleted."));
+  } else println(WARNING, "FS: " + path + " file does not exist!!!!");
 }
 
 File Files::writeFile(String path) {
   File file;
   file = LittleFS.open(path, "w");
-  if (!file) debugln("FS ERROR: " + path + " opening file for writing!!!!");
+  if (!file) println(WARNING, "FS: " + path + " opening file for writing!!!!");
 
   return file;
 }
@@ -137,37 +137,37 @@ void Files::printInfo() {
   FSInfo info;
   LittleFS.info(info);
 
-  debugln("File system info:");
+  println(INFO, "File system info:");
 
-  debug("Total space:      ");
-  debug(String(info.totalBytes));
-  debugln("byte");
+  print(INFO, "Total space:      ");
+  print(INFO, String(info.totalBytes));
+  println(INFO, "byte");
 
-  debug("Total space used: ");
-  debug(String(info.usedBytes));
-  debugln("byte");
+  print(INFO, "Total space used: ");
+  print(INFO, String(info.usedBytes));
+  println(INFO, "byte");
 
-  debug("Total space free: ");
-  debug(String(info.totalBytes - info.usedBytes));
-  debugln("byte");
-  debugln();
+  print(INFO, "Total space free: ");
+  print(INFO, String(info.totalBytes - info.usedBytes));
+  println(INFO, "byte");
+  println();
 
   Dir dir = LittleFS.openDir("/");
   while (dir.next()) {
-    debug(dir.fileName());
+    print(INFO, dir.fileName());
     if (dir.fileSize()) {
       File file = dir.openFile("r");
       count++;
       size += file.size();
-      for (int i = dir.fileName().length(); i < 17; i++) debug(" ");
-      debugln(" " + String(file.size()));
+      for (int i = dir.fileName().length(); i < 17; i++) print(INFO, " ");
+      println(INFO, " " + String(file.size()));
       file.close();
     }
   }
   String countString = "   " + String(count) + " File(s)";
-  debug(countString);
-  for (int i = countString.length(); i < 17; i++) debug(" ");
-  debugln(" " + String(size));
+  print(INFO, countString);
+  for (int i = countString.length(); i < 17; i++) print(INFO, " ");
+  println(INFO, " " + String(size));
 }
 
 unsigned int Files::availableSpace() {
@@ -178,7 +178,7 @@ unsigned int Files::availableSpace() {
 
 
 void Scan::setup() {
-  debugln("I2C Scanner Complete");
+  println(PASSED, "I2C Scanner Complete");
 }
 
 #define MAX_SCAN_DEVICES 6
@@ -188,8 +188,8 @@ void Scan::scan(Output* screen) {
   int nDevices;
   String devicesFound[MAX_SCAN_DEVICES];
 
-  debugln("\nI2C Scanner");
-  debugln("Scanning...");
+  println(INFO, "\nI2C Scanner");
+  println(INFO, "Scanning...");
 
   nDevices = 0;
   for (address = 1; address < 127; address++) {
@@ -202,11 +202,11 @@ void Scan::scan(Output* screen) {
     mutex->give();
 
     if (error == 0) {
-      debug("I2C device found at address 0x");
+      print(INFO, "I2C device found at address 0x");
       if (address < 16)
-        debug("0");
-      debug(String(address, HEX));
-      debugln("  !");
+        print(INFO, "0");
+      print(INFO, String(address, HEX));
+      println(INFO, "  !");
 
       if (nDevices < MAX_SCAN_DEVICES) {
         devicesFound[nDevices] = String(nDevices) + ". 0x" + String(address, HEX);
@@ -215,17 +215,17 @@ void Scan::scan(Output* screen) {
       nDevices++;
 
     } else if (error == 4) {
-      debug("Unknown error at address 0x");
+      print(WARNING, "Unknown error at address 0x");
       if (address < 16)
-        debug("0");
-      debugln(String(address, HEX));
+        print(WARNING, "0");
+      println(WARNING, String(address, HEX));
     }
   }
 
   if (nDevices == 0)
-    debugln("No I2C devices found\n");
+    println(INFO, "No I2C devices found\n");
   else
-    debugln("done\n");
+    println(INFO, "done\n");
   screen->setScreen("I2c Scanner", "", devicesFound[0], devicesFound[1], devicesFound[2], devicesFound[3], devicesFound[4], devicesFound[5]);
 }
 
@@ -243,7 +243,7 @@ void HTMLBuilder::print(const char* line) {
     memcpy(&html[index], line, strlen(line));
     index += size;
   } else {
-    debugln("ERROR: Building HTML exceeded buffer length");
+    println("ERROR: Building HTML exceeded buffer length");
   }
 }
 

@@ -11,7 +11,7 @@ void Temperature::setup(Gpio* gpio, EEpromMemory* memory) {
   setRefresh(refreshRateInValid);
   dht.begin();
   readTemperature();
-  debugln("Temperature Sensor Complete");
+  println((validTemperature()) ? PASSED : FAILED, "Temperature Sensor Complete");
 }
 
 void Temperature::loop() {

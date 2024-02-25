@@ -11,38 +11,121 @@
 #include "serialport.h"
 #include "util.h"
 
-static Mutex serialMutex;
-static bool serialSetup = false;
+#ifdef SERIALPORT
 
-#if defined(DEBUG) || defined(SERIALPORT)
-void debugSetup() {
-  if (!serialSetup)
-    Serial1.begin(115200);
-  serialSetup = true;
+static Mutex serialMutex;
+
+void serialSetup() {
+  Serial1.begin(115200);
 }
 
-void debug(String line) {
+static void __print(String line) {
   serialMutex.take();
   Serial1.print(line);
   serialMutex.give();
 }
-void debugln(String line) {
+static void __println(String line) {
   serialMutex.take();
   Serial1.println(line);
   serialMutex.give();
 }
-void debugln() {
-  debugln("");
+
+void printColor(COLOR color) {
+  char colorString[32];
+  sprintf(colorString, "\033[%dm", color);
+  __print(colorString);
 }
 
+void print(PRINT_TYPES type, String line) {
+  printColor(Normal);
+  switch (type) {
+    case TRACE:
+#ifdef DEBUG
+      __print("[");
+      printColor(Cyan);
+      __print("  DEBUG ");
+      printColor(Normal);
+      __print("] ");
+      printColor(Cyan);
 #else
-#pragma GCC warning "No Debug Output Included"
-void debugSetup() {}
-void debug(String line) {}
-void debugln(String line) {}
+      return;
 #endif
+      break;
+    case PROMPT:
+      printColor(Green);
+      break;
+    case ERROR:
+      __print("[");
+      printColor(Red);
+      __print("  ERROR ");
+      printColor(Normal);
+      __print("] ");
+      printColor(Red);
+      break;
+    case PASSED:
+      __print("[");
+      printColor(Green);
+      __print("   OK   ");
+      printColor(Normal);
+      __print("] ");
+      break;
+    case FAILED:
+      __print("[");
+      printColor(Red);
+      __print(" FAILED ");
+      printColor(Normal);
+      __print("] ");
+      break;
+    case WARNING:
+      printColor(Red);
+      break;
+    case HELP:
+    case INFO:
+    default:
+      break;
+  }
+  __print(line);
+  printColor(Normal);
+}
 
-#ifdef SERIALPORT
+void print(PRINT_TYPES type, String line, String line2) {
+  printColor(Normal);
+  switch (type) {
+    case HELP:
+      print(type, line);
+      printColor(Yellow);
+      __print(line2);
+      printColor(Normal);
+      break;
+    case ERROR:
+      print(type, line);
+      print(WARNING, line2);
+      break;
+    case PASSED:
+    case FAILED:
+      print(type, line);
+      print(INFO, line2);
+      break;
+    default:
+      print(type, line);
+      print(type, line2);
+      break;
+  }
+}
+void println() {
+  __println(String(""));
+}
+
+void println(PRINT_TYPES type, String line) {
+  print(type, line);
+  println();
+}
+
+void println(PRINT_TYPES type, String line, String line2) {
+  print(type, line, line2);
+  println();
+}
+
 SerialCmd serialCmd(Serial1, SERIALCMD_CR, (char*)(SERIALCMD_SPACE));
 
 static Scan* _i2cScanner;
@@ -80,10 +163,8 @@ void SerialPort::setup(Scan* scan, EEpromMemory* eepromMemory, Gpio* gpioControl
   _temperature = tempStatus;
   _watchdog = watchdog;
   _files = files;
-  if (!serialSetup)
-    Serial1.begin(115200);
-  serialSetup = true;
   serialCmd.AddCmd("?", SERIALCMD_FROMALL, help);
+  serialCmd.AddCmd("help", SERIALCMD_FROMALL, help);
   serialCmd.AddCmd("gpio", SERIALCMD_FROMALL, gpiostatus);
   serialCmd.AddCmd("temp", SERIALCMD_FROMALL, tempstatus);
   serialCmd.AddCmd("relay", SERIALCMD_FROMALL, relayToggle);
@@ -100,18 +181,20 @@ void SerialPort::setup(Scan* scan, EEpromMemory* eepromMemory, Gpio* gpioControl
   serialCmd.AddCmd("test", SERIALCMD_FROMALL, testOutput);
   serialCmd.AddCmd("scan", SERIALCMD_FROMALL, scani2c);
   serialCmd.AddCmd("bitmap", SERIALCMD_FROMALL, bitmap);
+#else
+#pragma GCC warning "Debug Functions are defined but unused - Expected Behaviour!"
 #endif
-  debugln("Serial Port Complete");
+  println(PASSED, "Serial Port Complete");
 }
 
 void SerialPort::loop() {
   int ret;
   ret = serialCmd.ReadSer();
   if (ret == 0) {
-    debugln();
-    debug("ERROR: Unrecognized command: ");
-    debugln(serialCmd.lastLine);
-    debugln("Enter \'?\' for help.");
+    println();
+    print(ERROR, "Unrecognized command: ");
+    println(WARNING, serialCmd.lastLine);
+    println(INFO, "Enter \'?\' for help.");
     prompt();
   } else if (ret == 1) {
     prompt();
@@ -125,7 +208,7 @@ void SerialPort::complete() {
 
 void bitmap() {
   char* value;
-  debugln();
+  println();
   value = serialCmd.ReadNext();
   if (value != NULL) {
     BITMAP bitmap = (BITMAP)atoi(value);
@@ -134,22 +217,22 @@ void bitmap() {
     help();
 }
 static void minimalist() {
-  debugln();
-  debugln("For use in automation, there are minimalist HTTP requests and responses.");
-  debugln("To make use of these, open a telnet session to the power module on port 80.");
-  debugln("To turn on a switch - \"GET /on/[n]\" the response is \"on\".");
-  debugln("To turn off a switch - \"GET /off/[n]\" the response is \"off\".");
-  debugln("To check the status of a switch - \"GET /stat/[n]\" the response is \"on\" or \"off\".");
-  debugln("[n] is the switch number between 1 and " + String(NUM_DEVICES));
-  debugln();
-  debugln("The purpose of these minimalist http commands is to enable the coder");
-  debugln("to make use of the power switch without the overhead of http.");
+  println();
+  println(INFO, "For use in automation, there are minimalist HTTP requests and responses.");
+  println(INFO, "To make use of these, open a telnet session to the power module on port 80.");
+  println(INFO, "To turn on a switch - \"GET /on/[n]\" the response is \"on\".");
+  println(INFO, "To turn off a switch - \"GET /off/[n]\" the response is \"off\".");
+  println(INFO, "To check the status of a switch - \"GET /stat/[n]\" the response is \"on\" or \"off\".");
+  println(INFO, "[n] is the switch number between 1 and " + String(NUM_DEVICES));
+  println();
+  println(INFO, "The purpose of these minimalist http commands is to enable the coder");
+  println(INFO, "to make use of the power switch without the overhead of http.");
   prompt();
 }
 
 void deleteFile() {
   char* value;
-  debugln();
+  println();
   value = serialCmd.ReadNext();
   if (value != NULL) {
     _files->deleteFile(value);
@@ -159,7 +242,7 @@ void deleteFile() {
 }
 
 void printDir() {
-  debugln();
+  println();
   _files->printInfo();
 }
 
@@ -170,17 +253,17 @@ void testOutput() {
   bool thirdState;
   bool error = false;
   bool overall = false;
-  debugln();
-  debugln("Testing Output Ports");
-  debug("Output Ports: ");
-  debugln(String(numberOfDevices));
+  println();
+  println(INFO, "Testing Output Ports");
+  print(INFO, "Output Ports: ");
+  println(INFO, String(numberOfDevices));
   for (int i = 0; i < numberOfDevices; i++) {
     error = false;
     rp2040.wdt_reset();
-    debug("Testing Port: ");
-    debug(String(i + 1));
-    debug("; Name: ");
-    debugln(String(_memory->getDeviceName(i)));
+    print(INFO, "Testing Port: ");
+    print(INFO, String(i + 1));
+    print(INFO, "; Name: ");
+    println(INFO, String(_memory->getDeviceName(i)));
     firstState = _gpio->readRelay(i);
     _gpio->commandRelay(i);
     delay(1000);
@@ -197,119 +280,119 @@ void testOutput() {
       error = true;
 
     if (error) {
-      debug("ERROR: Output Port ");
-      debug(String(i + 1));
-      debugln(" Failed");
-      debug("First State: ");
-      debugln((firstState) ? "HIGH" : "LOW");
-      debug("Second State: ");
-      debugln((secondState) ? "HIGH" : "LOW");
-      debug("Third State: ");
-      debugln((thirdState) ? "HIGH" : "LOW");
+      print(ERROR, "Output Port ");
+      print(WARNING, String(i + 1));
+      println(WARNING, " Failed");
+      print(ERROR, "First State: ");
+      println(WARNING, (firstState) ? "HIGH" : "LOW");
+      print(ERROR, "Second State: ");
+      println(WARNING, (secondState) ? "HIGH" : "LOW");
+      print(ERROR, "Third State: ");
+      println(WARNING, (thirdState) ? "HIGH" : "LOW");
     } else {
-      debug("SUCCESS: Output Port ");
-      debug(String(i + 1));
-      debugln(" Passed");
+      print(INFO, "SUCCESS: Output Port ");
+      print(INFO, String(i + 1));
+      println(INFO, " Passed");
     }
     overall |= error;
   }
-  if (overall) debugln("ERROR: Output Port Test Failed");
-  else debugln("SUCCESS: Output Port Test Passed");
+  if (overall) println(FAILED, "ERROR: Output Port Test Failed");
+  else println(PASSED, "SUCCESS: Output Port Test Passed");
 }
 
 void memStat() {
-  debugln();
-  debug("PRG Num: ");
-  debug(String(_memory->mem.mem.programNumber));
-  debug(" PRG Ver: ");
-  debug(String(_memory->mem.mem.programVersionMajor));
-  debug(".");
-  debugln(String(_memory->mem.mem.programVersionMinor));
-  debug("MAC: ");
-  debug(String(_memory->mem.mem.macAddress[0], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[1], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[2], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[3], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[4], HEX) + ":");
-  debugln(String(_memory->mem.mem.macAddress[5], HEX));
-  debugln("IP Address is " + String((_memory->mem.mem.isDHCP) ? "DHCP" : "Static"));
-  debug("IP Address: ");
-  debug(String(_memory->mem.mem.ipAddress[0]) + ".");
-  debug(String(_memory->mem.mem.ipAddress[1]) + ".");
-  debug(String(_memory->mem.mem.ipAddress[2]) + ".");
-  debugln(String(_memory->mem.mem.ipAddress[3]));
-  debug("Subnet Mask: ");
-  debug(String(_memory->mem.mem.subnetMask[0]) + ".");
-  debug(String(_memory->mem.mem.subnetMask[1]) + ".");
-  debug(String(_memory->mem.mem.subnetMask[2]) + ".");
-  debugln(String(_memory->mem.mem.subnetMask[3]));
-  debug("Gateway: ");
-  debug(String(_memory->mem.mem.gatewayAddress[0]) + ".");
-  debug(String(_memory->mem.mem.gatewayAddress[1]) + ".");
-  debug(String(_memory->mem.mem.gatewayAddress[2]) + ".");
-  debugln(String(_memory->mem.mem.gatewayAddress[3]));
-  debug("DNS Address: ");
-  debug(String(_memory->mem.mem.dnsAddress[0]) + ".");
-  debug(String(_memory->mem.mem.dnsAddress[1]) + ".");
-  debug(String(_memory->mem.mem.dnsAddress[2]) + ".");
-  debugln(String(_memory->mem.mem.dnsAddress[3]));
-  debug("Num Dev: ");
-  debugln(String(_memory->mem.mem.numberOfDevices));
+  println();
+  print(INFO, "PRG Num: ");
+  print(INFO, String(_memory->mem.mem.programNumber));
+  print(INFO, " PRG Ver: ");
+  print(INFO, String(_memory->mem.mem.programVersionMajor));
+  print(INFO, ".");
+  println(INFO, String(_memory->mem.mem.programVersionMinor));
+  print(INFO, "MAC: ");
+  print(INFO, String(_memory->mem.mem.macAddress[0], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[1], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[2], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[3], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[4], HEX) + ":");
+  println(INFO, String(_memory->mem.mem.macAddress[5], HEX));
+  println(INFO, "IP Address is " + String((_memory->mem.mem.isDHCP) ? "DHCP" : "Static"));
+  print(INFO, "IP Address: ");
+  print(INFO, String(_memory->mem.mem.ipAddress[0]) + ".");
+  print(INFO, String(_memory->mem.mem.ipAddress[1]) + ".");
+  print(INFO, String(_memory->mem.mem.ipAddress[2]) + ".");
+  println(INFO, String(_memory->mem.mem.ipAddress[3]));
+  print(INFO, "Subnet Mask: ");
+  print(INFO, String(_memory->mem.mem.subnetMask[0]) + ".");
+  print(INFO, String(_memory->mem.mem.subnetMask[1]) + ".");
+  print(INFO, String(_memory->mem.mem.subnetMask[2]) + ".");
+  println(INFO, String(_memory->mem.mem.subnetMask[3]));
+  print(INFO, "Gateway: ");
+  print(INFO, String(_memory->mem.mem.gatewayAddress[0]) + ".");
+  print(INFO, String(_memory->mem.mem.gatewayAddress[1]) + ".");
+  print(INFO, String(_memory->mem.mem.gatewayAddress[2]) + ".");
+  println(INFO, String(_memory->mem.mem.gatewayAddress[3]));
+  print(INFO, "DNS Address: ");
+  print(INFO, String(_memory->mem.mem.dnsAddress[0]) + ".");
+  print(INFO, String(_memory->mem.mem.dnsAddress[1]) + ".");
+  print(INFO, String(_memory->mem.mem.dnsAddress[2]) + ".");
+  println(INFO, String(_memory->mem.mem.dnsAddress[3]));
+  print(INFO, "Num Dev: ");
+  println(INFO, String(_memory->mem.mem.numberOfDevices));
   for (int i = 0; i < _memory->getNumberOfDevices(); i++) {
-    debug("Name ");
-    debug(String(i + 1));
-    debug(": ");
-    debugln(String(_memory->getDeviceName(i)));
+    print(INFO, "Name ");
+    print(INFO, String(i + 1));
+    print(INFO, ": ");
+    println(INFO, String(_memory->getDeviceName(i)));
   }
-  debug("Temperature Drift: ");
-  debugln(String(_memory->mem.mem.drift));
+  print(INFO, "Temperature Drift: ");
+  println(INFO, String(_memory->mem.mem.drift));
 }
 
 void ipStat() {
   IPAddress ipAddress = ethernet.getIPAddress();
   bool linked = ethernet.linkStatus();
-  debugln();
-  debug("MAC Address:  ");
-  debug(String(_memory->mem.mem.macAddress[0], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[1], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[2], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[3], HEX) + ":");
-  debug(String(_memory->mem.mem.macAddress[4], HEX) + ":");
-  debugln(String(_memory->mem.mem.macAddress[5], HEX));
-  debugln("IP Address is " + String((_memory->mem.mem.isDHCP) ? "DHCP" : "Static"));
-  debugln(String((linked) ? "Connected" : "Unconnected"));
-  debugln("  IP Address:  " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
+  println();
+  print(INFO, "MAC Address:  ");
+  print(INFO, String(_memory->mem.mem.macAddress[0], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[1], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[2], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[3], HEX) + ":");
+  print(INFO, String(_memory->mem.mem.macAddress[4], HEX) + ":");
+  println(INFO, String(_memory->mem.mem.macAddress[5], HEX));
+  println(INFO, "IP Address is " + String((_memory->mem.mem.isDHCP) ? "DHCP" : "Static"));
+  println(INFO, String((linked) ? "Connected" : "Unconnected"));
+  println(INFO, "  IP Address:  " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
   ipAddress = ethernet.getSubnetMask();
-  debugln("  Subnet Mask: " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
+  println(INFO, "  Subnet Mask: " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
   ipAddress = ethernet.getGateway();
-  debugln("  Gateway:     " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
+  println(INFO, "  Gateway:     " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
   ipAddress = ethernet.getDNS();
-  debugln("  DNS Server:  " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
+  println(INFO, "  DNS Server:  " + String(ipAddress[0]) + String(".") + String(ipAddress[1]) + String(".") + String(ipAddress[2]) + String(".") + String(ipAddress[3]));
 }
 
 void rebootPico() {
-  debugln();
-  debugln("Rebooting....");
+  println();
+  println(PROMPT, "Rebooting....");
   _screen->setScreen("Rebooting...");
   delay(100);
   rp2040.reboot();
 }
 
 void wipeMemory() {
-  debugln();
+  println();
   _memory->initMemory();
 }
 
 void relayToggle() {
   char* value;
-  debugln();
+  println();
   value = serialCmd.ReadNext();
   if (value != NULL) {
     int relay = atoi(value) - 1;
     _gpio->setCommand(relay);
-    debug("Commanded Relay ");
-    debug(value);
-    debugln(String(!_gpio->getRelay(relay) ? " ON" : " OFF"));
+    print(INFO, "Commanded Relay ");
+    print(INFO, value);
+    println(INFO, String(!_gpio->getRelay(relay) ? " ON" : " OFF"));
     _screen->setScreen("Commanded Relay", "", "Relay " + String(value), (!_gpio->getRelay(relay)) ? "ON" : "OFF");
   } else
     help();
@@ -317,56 +400,56 @@ void relayToggle() {
 
 void stat() {
   char* value;
-  debugln();
+  println();
   value = serialCmd.ReadNext();
   if (value != NULL) {
     int relay = atoi(value) - 1;
     _gpio->getRelay(relay);
-    debugln((_gpio->getRelay(relay)) ? "ON" : "OFF");
+    println(INFO, (_gpio->getRelay(relay)) ? "ON" : "OFF");
     _screen->setScreen("Status Relay", "", "Relay " + String(value), (_gpio->getRelay(relay)) ? "ON" : "OFF");
   } else
     help();
 }
 
 void tempstatus() {
-  debugln();
-  debug("Temperature ");
-  (_temperature->validTemperature()) ? debug("valid ") : debug("invalid ");
-  debug(String(_temperature->getTemperature()));
-  debugln("°F.");
+  println();
+  print(INFO, "Temperature ");
+  (_temperature->validTemperature()) ? print(INFO, "valid ") : print(INFO, "invalid ");
+  print(INFO, String(_temperature->getTemperature()));
+  println(INFO, "°F.");
   _screen->setScreen("Temperature", "", (_temperature->validTemperature()) ? "Valid " : "Invalid ", String(_temperature->getTemperature()) + " F.");
 }
 
 void gpiostatus() {
   int index;
-  debugln();
-  debugln("GPIO Status");
-  debugln();
+  println();
+  println(INFO, "GPIO Status");
+  println();
   for (index = 0; index < MONITOR_DEVICES; index++) {
-    debug("Device ");
-    debug(String(index + 1));
-    debug(": ");
-    debugln(String(_gpio->getOnline(index)));
+    print(INFO, "Device ");
+    print(INFO, String(index + 1));
+    print(INFO, ": ");
+    println(INFO, String(_gpio->getOnline(index)));
   }
-  debugln();
+  println();
   for (index = 0; index < NUM_DEVICES; index++) {
-    debug("Relay ");
-    debug(String(index + 1));
-    debug(": ");
-    debugln(String(_gpio->getRelay(index)));
+    print(INFO, "Relay ");
+    print(INFO, String(index + 1));
+    print(INFO, ": ");
+    println(INFO, String(_gpio->getRelay(index)));
   }
-  debugln();
+  println();
   for (index = 0; index < NUM_DEVICES; index++) {
-    debug("Command ");
-    debug(String(index + 1));
-    debug(": ");
-    debugln(String(_gpio->getCommand(index)));
+    print(INFO, "Command ");
+    print(INFO, String(index + 1));
+    print(INFO, ": ");
+    println(INFO, String(_gpio->getCommand(index)));
   }
-  debugln();
+  println();
 }
 
 void scani2c() {
-  debugln();
+  println();
   _i2cScanner->scan(_screen);
 }
 
@@ -388,7 +471,7 @@ void configure() {
   unsigned int parameters[4];
   unsigned int count = 0;
 
-  debugln();
+  println();
   value = serialCmd.ReadNext();
 
   if (strncmp("temp", value, 4) == 0) {
@@ -417,29 +500,29 @@ void configure() {
   } else if (strncmp("name", value, 4) == 0) {
     item = Name;
     count = 1;
-  } else if (strncmp("?", value, 1) == 0) {
+  } else if ((strncmp("?", value, 1) == 0) || (strncmp("help", value, 1))) {
     item = None;
     count = 0;
   } else {
-    debug("Invalid Config: <");
-    debug(value);
-    debugln(">");
+    print(WARNING, "Invalid Config: <");
+    print(WARNING, value);
+    println(WARNING, ">");
     item = None;
   }
   for (unsigned int i = 0; i < count; i++) {
     value = serialCmd.ReadNext();
-    debug(value);
-    debug(" ");
+    print(INFO, value);
+    print(INFO, " ");
     if (value == NULL) {
       item = None;
       count = 0;
-      debugln("Missing Parameters in config");
+      println(WARNING, "Missing Parameters in config");
       break;
     }
     parameters[i] = atoi(value);
   }
   value = serialCmd.ReadNext();
-  debugln(value);
+  println(INFO, value);
   switch (item) {
     case TempDrift:
       _memory->mem.mem.drift = parameters[0];
@@ -482,94 +565,97 @@ void configure() {
       break;
     case Name:
       if (value == NULL) {
-        debugln("Missing device name in \"config name [n] [name]\"");
+        println(WARNING, "Missing device name in \"config name [n] [name]\"");
         break;
       }
       _memory->setDeviceName(parameters[0] - 1, value, strlen(value));
       break;
     case None:
     default:
-      debugln("config name [n] [name] - Sets device name");
-      debugln("config temp [n]        - Set the drift for the temperature sensor");
-      debugln("config dhcp [0|1]      - 0, turns off DHCP; 1, turns on DHCP");
-      debugln("config ip [n] [n] [n] [n]     - Sets the IP address n.n.n.n");
-      debugln("config dns [n] [n] [n] [n]    - Sets the DNS address n.n.n.n");
-      debugln("config gw [n] [n] [n] [n]     - Sets the Gateway address n.n.n.n");
-      debugln("config subnet [n] [n] [n] [n] - Sets the Subnet Mask n.n.n.n");
+      println(HELP, "config name [n] [name] ", "- Sets device name");
+      println(HELP, "config temp [n]        ", "- Set the drift for the temperature sensor");
+      println(HELP, "config dhcp [0|1]      ", "- 0, turns off DHCP; 1, turns on DHCP");
+      println(HELP, "config ip [n] [n] [n] [n]     ", "- Sets the IP address n.n.n.n");
+      println(HELP, "config dns [n] [n] [n] [n]    ", "- Sets the DNS address n.n.n.n");
+      println(HELP, "config gw [n] [n] [n] [n]     ", "- Sets the Gateway address n.n.n.n");
+      println(HELP, "config subnet [n] [n] [n] [n] ", "- Sets the Subnet Mask n.n.n.n");
 #ifdef DEBUG
-      debugln("config gpio [0|1]      - 0, turns off GPIO testing; 1, turns on GPIO testing");
+      println(HELP, "config gpio [0|1]      ", "- 0, turns off GPIO testing; 1, turns on GPIO testing");
 #endif
-      debugln("config ?               - Print config Help");
-      debugln();
-      debugln("Note: Addresses use a space seperator, so \"192.168.168.4\" is \"192 168 168 4\"");
-      debugln("      Must Reboot the system for some changes to take effect");
+      println(HELP, "config help/?          ", "- Print config Help");
+      println();
+      println(HELP, "Note: Addresses use a space seperator, so \"192.168.168.4\" is \"192 168 168 4\"");
+      println(HELP, "      Must Reboot the system for some changes to take effect");
       return;
   }
-  debugln("Command Complete");
+  println(PASSED, "Command Complete");
 }
 
 void banner() {
-  debugln();
-  debugln(APP_NAME);
-  debug("PRG Num: ");
-  debug(String(_memory->mem.mem.programNumber));
-  debug(" PRG Ver: ");
-  debug(String(_memory->mem.mem.programVersionMajor));
-  debug(".");
-  debug(String(_memory->mem.mem.programVersionMinor));
-  debug(" Num Dev: ");
-  debugln(String(_memory->mem.mem.numberOfDevices));
-  debugln("Build Date: " + String(compileDate) + " Time: " + String(compileTime));
-  debugln();
-  debug("Microcontroller: Raspberry Pi Pico");
-  (rp2040.isPicoW()) ? debugln("W") : debugln();
-  debug("Core is running at ");
-  debug(String(rp2040.f_cpu() / 1000000));
-  debugln(" Mhz");
+  println();
+  println(PROMPT, APP_NAME);
+  print(INFO, "PRG Num: ");
+  print(INFO, String(_memory->mem.mem.programNumber));
+  print(INFO, " PRG Ver: ");
+  print(INFO, String(_memory->mem.mem.programVersionMajor));
+  print(INFO, ".");
+  print(INFO, String(_memory->mem.mem.programVersionMinor));
+  print(INFO, " Num Dev: ");
+  println(INFO, String(_memory->mem.mem.numberOfDevices));
+  println(INFO, "Build Date: " + String(compileDate) + " Time: " + String(compileTime));
+  println();
+  print(INFO, "Microcontroller: Raspberry Pi Pico");
+  (rp2040.isPicoW()) ? println(INFO, "W") : println();
+  print(INFO, "Core is running at ");
+  print(INFO, String(rp2040.f_cpu() / 1000000));
+  println(INFO, " Mhz");
   int used = rp2040.getUsedHeap();
   int total = rp2040.getTotalHeap();
   int percentage = (used * 100) / total;
-  debug("RAM Memory Usage: ");
-  debug(String(used));
-  debug("/");
-  debug(String(total));
-  debug(" --> ");
-  debug(String(percentage));
-  debugln("%");
-  debug("CPU Temperature: ");
-  debug(String((9.0 / 5.0 * analogReadTemp()) + 32.0, 0));
-  debugln("°F.");
+  print(INFO, "RAM Memory Usage: ");
+  print(INFO, String(used));
+  print(INFO, "/");
+  print(INFO, String(total));
+  print(INFO, " --> ");
+  print(INFO, String(percentage));
+  println(INFO, "%");
+  print(INFO, "CPU Temperature: ");
+  print(INFO, String((9.0 / 5.0 * analogReadTemp()) + 32.0, 0));
+  println(INFO, "°F.");
 }
 
 void help() {
   banner();
-  debugln();
+  println();
 
-  debugln("config ... - Configure Devices \"config ?\" for more");
-  debugln("wipe       - Wipe and Initialize Memory");
-  debugln("relay [n]  - Command Relay n to Toggle");
-  debugln("stat [n]   - Status Relay n");
-  debugln("temp       - Temperature Status");
-  debugln("gpio       - GPIO Status");
+  println(HELP, "config ... ", "- Configure Devices \"config ?\" for more");
+  println(HELP, "wipe       ", "- Wipe and Initialize Memory");
+  println(HELP, "relay [n]  ", "- Command Relay n to Toggle");
+  println(HELP, "stat [n]   ", "- Status Relay n");
+  println(HELP, "temp       ", "- Temperature Status");
+  println(HELP, "gpio       ", "- GPIO Status");
 #ifdef DEBUG
-  debugln("scan       - I2c Scanner");
-  debugln("test       - Tests all of the Relay Commands and Status GPIO");
-  debugln("bitmap     - Displays an image on the screen");
+  println(HELP, "scan       ", "- I2c Scanner");
+  println(HELP, "test       ", "- Tests all of the Relay Commands and Status GPIO");
+  println(HELP, "bitmap [n] ", "- Displays an image on the screen");
 #endif
-  debugln("ip         - IP Stats");
-  debugln("mem        - Contents of Flash Memory");
-  debugln("dir        - Contents of File System");
-  debugln("del [file] - Deletes a file");
-  debugln("reboot     - Software Reboot the Pico");
-  debugln("?          - Print Help");
+  println(HELP, "ip         ", "- IP Stats");
+  println(HELP, "mem        ", "- Contents of Flash Memory");
+  println(HELP, "dir        ", "- Contents of File System");
+  println(HELP, "del [file] ", "- Deletes a file");
+  println(HELP, "reboot     ", "- Software Reboot the Pico");
+  println(HELP, "help/?     ", "- Print Help");
 }
 
 void prompt() {
-  debug("power:\\> ");
+  print(PROMPT, "power:\\> ");
 }
 
 #else
 #pragma GCC warning "No Serial Port Command Server Included"
+void serialSetup() {}
+void print(String line) {}
+void println(String line) {}
 void SerialPort::setup(Scan* scan, EEpromMemory* eepromMemory, Gpio* gpioControl, Screen* oledscreen, Temperature* tempStatus, Watchdog* watchdog, Files* files){};
 void SerialPort::loop(){};
 void SerialPort::complete(){};

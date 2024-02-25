@@ -26,7 +26,7 @@ void Gpio::setup() {
   }
   mutex->give();
   setOnline(BUTTON, true);
-  debugln("GPIO Setup Complete");
+  println(PASSED, "GPIO Setup Complete");
 }
 
 void Gpio::testOutput(unsigned int pin) {

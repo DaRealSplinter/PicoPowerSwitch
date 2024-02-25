@@ -16,7 +16,7 @@ bool EthernetModule::setupSPI() {
   status &= SPI.setCS(17);
 
   SPI.begin();
-  debugln("SPI Start Complete");
+  println(PASSED, "SPI Start Complete");
   return status;
 }
 
@@ -27,7 +27,7 @@ bool EthernetModule::resetW5500() {
   delay(200);
   digitalWrite(15, HIGH);
   delay(200);
-  debugln("W5500 Restart Complete");
+  println(PASSED, "W5500 Restart Complete");
   return true;
 }
 
@@ -43,14 +43,15 @@ bool EthernetModule::setupW5500() {
   }
 
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    debugln("Ethernet Module was not found.");
+    status = false;
+    println(ERROR, "Ethernet Module was not found.");
   } else if (Ethernet.hardwareStatus() == EthernetW5100) {
-    debugln("W5100 Ethernet controller detected.");
+    println(INFO, "W5100 Ethernet controller detected.");
   } else if (Ethernet.hardwareStatus() == EthernetW5200) {
-    debugln("W5200 Ethernet controller detected.");
+    println(INFO, "W5200 Ethernet controller detected.");
   } else if (Ethernet.hardwareStatus() == EthernetW5500) {
     status &= true;
-    debugln("W5500 Ethernet controller detected.");
+    println(INFO, "W5500 Ethernet controller detected.");
   }
   return status;
 }
@@ -61,7 +62,10 @@ void EthernetModule::setup(Gpio* gpio) {
   status &= setupSPI();
   status &= setupW5500();
   etherMutex->give();
-  debugln("Ethernet Complete");
+  if (status)
+    println(PASSED, "Ethernet Complete");
+  else
+    println(FAILED, "Ethernet Complete");
   gpio->setOnline(W5500, status);
   return;
 }

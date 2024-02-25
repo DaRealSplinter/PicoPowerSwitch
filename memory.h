@@ -7,7 +7,7 @@
 
 #define PROGRAM_NUMBER 0x01
 #define PROGRAM_VERSION_MAJOR 0x01
-#define PROGRAM_VERSION_MINOR 0x0B
+#define PROGRAM_VERSION_MINOR 0x0C
 #define NAME_MAX_LENGTH 15
 
 struct MemoryStruct {

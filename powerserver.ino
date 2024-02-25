@@ -32,7 +32,7 @@ void PowerServer::setup(Files* f) {
   headerStringPostUpgrade = "POST /upgrade";
 
   server.begin();
-  debugln("ETHERNET Server Complete");
+  println(PASSED, "ETHERNET Server Complete");
 }
 
 void PowerServer::sendPageBegin(HTMLBuilder* html, EthernetModule* ethernet, bool autoRefresh, int seconds) {
@@ -385,10 +385,10 @@ bool PowerServer::receiveFile(Watchdog* watchdog, File* file, unsigned int bytes
     watchdog->petWatchdog();
     delay(10);
   }
-  //debug("Received File: ");
-  //debug(String(total));
-  //debug("/");
-  //debugln(String(bytes));
+  //print("Received File: ");
+  //print(String(total));
+  //print("/");
+  //println(String(bytes));
   return (total == bytes);
 }
 
@@ -423,21 +423,21 @@ void PowerServer::processHeader(EthernetModule* ethernet, EEpromMemory* memory, 
   HTMLBuilder html;
   // if the current line is blank, you got two newline characters in a row.
   // that's the end of the client HTTP request, so send a response:
-  //debug("<");
-  //debug(action);
-  //debugln(">");
+  //print("<");
+  //print(action);
+  //println(">");
   // turns the GPIOs on and off
   for (byte i = 0; i < NUM_DEVICES; i++) {
     if (headerStringOn[i].equals(String(action))) {
       if (gpio->getRelay(i) == LOW)
         gpio->setCommand(i);
       getPowerPage = true;
-      //debug("Get Device " + String(i + 1) + " ON - ");
+      //print("Get Device " + String(i + 1) + " ON - ");
     } else if (headerStringOff[i].equals(String(action))) {
       if (gpio->getRelay(i) == HIGH)
         gpio->setCommand(i);
       getPowerPage = true;
-      //debug("Get Device " + String(i + 1) + " OFF - ");
+      //print("Get Device " + String(i + 1) + " OFF - ");
     } else if (headerStringMinOn[i].equals((String(action)))) {
       minimalist = true;
       if (gpio->getRelay(i) == LOW)
@@ -457,22 +457,22 @@ void PowerServer::processHeader(EthernetModule* ethernet, EEpromMemory* memory, 
     }
   }
   if ((headerStringMain.equals(String(action))) || getPowerPage) {
-    //debug("Get Power ");
+    //print("Get Power ");
     sendPowerPage(&html, ethernet, temperature, memory, gpio, getPowerPage);
   } else if (headerStringConfig.equals(String(action))) {
-    //debug("Get Config ");
+    //print("Get Config ");
     sendConfigPage(&html, ethernet, memory);
   } else if (headerStringConfigIP.equals(String(action))) {
-    //debug("Get Config IP");
+    //print("Get Config IP");
     sendConfigIPPage(&html, ethernet, memory);
   } else if ((String(action)).startsWith(headerStringProcess)) {
-    //debug("Get Process ");
+    //print("Get Process ");
     sendProcessPage(&html, ethernet, memory, action);
   } else if ((String(action)).startsWith(headerStringProcessIP)) {
-    //debug("Get IPProcess ");
+    //print("Get IPProcess ");
     sendProcessIPPage(&html, ethernet, memory, action);
   } else if (headerStringReboot.equals(String(action))) {
-    //debug("Get Reboot ");
+    //print("Get Reboot ");
     sendPageBegin(&html, ethernet, true, 6);
     html.println("<p>Rebooting.....</p>");
     sendPageEnd(&html);
@@ -480,33 +480,32 @@ void PowerServer::processHeader(EthernetModule* ethernet, EEpromMemory* memory, 
     client.stop();
     rp2040.reboot();
   } else if (headerStringServer.equals(String(action))) {
-    //debug("Get Server ");
+    //print("Get Server ");
     sendServerPage(&html, ethernet, memory, gpio);
   } else if (headerStringUpload.equals(String(action))) {
-    //debug("Get Upload");
+    //print("Get Upload");
     sendUploadPage(&html, ethernet);
   } else if (headerStringUpgrade.equals(String(action))) {
-    //debug("Get Upgrade");
+    //print("Get Upgrade");
     sendUploadPage(&html, ethernet, "<h2>OTA Upgrade<h2/>");
   } else if (minimalist) {
     client.write(html.buffer(), html.length());
   } else if ((String(action)).startsWith(headerStringMain)) {
     char* fileName = &action[4];
-    //debug("Get File " + String(fileName));
+    //print("Get File " + String(fileName));
     File file = files->getFile(fileName);
     if (file) {
       sendFile(&file);
     } else {
-      debugln("SERVER ERROR: " + String(fileName) + " not found!");
+      println(ERROR, "SERVER: " + String(fileName) + " not found!");
       sendErrorPage(&html, ethernet);
     }
     file.close();
   } else {
-    debug("UNKNOWN Connection to Server <");
-    debug(String(action));
-    debugln(">");
+    String unknown = "UNKNOWN Connection to Server <" + String(action) + ">";
+    println(WARNING, unknown);
   }
-  //debugln(" - Complete");
+  //println(" - Complete");
 }
 
 static const char* contentLength = "Content-Length: ";
@@ -636,7 +635,7 @@ void PowerServer::processPost(EthernetModule* ethernet, Watchdog* watchdog, char
                 state = ERROR_STATE;
               }
             } else {
-              debugln("NOT ENOUGH SPACE FOR FILE: " + String(fileName) + String(" Size: ") + String(fileLength) + String("/") + String(files->availableSpace()));
+              println(WARNING, "NOT ENOUGH SPACE FOR FILE: " + String(fileName) + String(" Size: ") + String(fileLength) + String("/") + String(files->availableSpace()));
               state = ERROR_STATE;
             }
             memset(postBuffer, 0, HEADER_LENGTH);
@@ -694,7 +693,7 @@ void PowerServer::loop(EthernetModule* ethernet, EEpromMemory* memory, Gpio* gpi
     while (client.connected() && ((millis() - startTime) < timeoutTime)) {  // loop while the client's connected
       if (client) {                                                         // if there's bytes to read from the client,
         char c = client.read();                                             // read a byte
-        //debug(String(c));
+        //print(String(c));
 
         if ((headerIndex <= 4) || (strncmp("GET ", headerBuffer, 4) == 0) || (strncmp("POST", headerBuffer, 4) == 0)) {
           if (headerIndex < 5) {
@@ -723,7 +722,7 @@ void PowerServer::loop(EthernetModule* ethernet, EEpromMemory* memory, Gpio* gpi
     }
     client.flush();
     client.stop();
-    //debugln("Client disconnected.\n");
+    //println("Client disconnected.\n");
   }
   //server.statusreport();
 }

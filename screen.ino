@@ -13,7 +13,7 @@ void Screen::setup(Gpio* gpio) {
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS) || (error != 0)) {
-    debugln("SSD1306 Display failed");
+    println(ERROR, "SSD1306 Display Not Connected");
   }
   // Clear the buffer
   display.clearDisplay();
@@ -22,7 +22,7 @@ void Screen::setup(Gpio* gpio) {
   //String versionString = "Ver. " + String(PROGRAM_NUMBER) + String(".") + String(PROGRAM_VERSION_MAJOR) + String(".") + String(PROGRAM_VERSION_MINOR);
   //setScreen(APP_NAME, versionString, "By John J. Gavel", "", "Initializing");
   gpio->setOnline(SSD1306, (error == 0));
-  debugln("Screen Complete");
+  println((error == 0) ? PASSED : FAILED, "Screen Complete");
 }
 
 void Screen::beginScreen() {

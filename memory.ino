@@ -41,7 +41,7 @@ void EEpromMemory::initMemory() {
   }
   mem.mem.drift = 0;
   memMutex->give();
-  debugln("Initialize Memory");
+  println(PASSED, "Initialize Memory");
 }
 
 void EEpromMemory::setDeviceName(byte device, char* name, int length) {
@@ -82,24 +82,20 @@ void EEpromMemory::setup(Gpio* gpio) {
   wireMutex->give();
   readEEPROM();
   if ((mem.mem.programNumber != PROGRAM_NUMBER) || (mem.mem.programVersionMajor != PROGRAM_VERSION_MAJOR) || (mem.mem.numberOfDevices != NUM_DEVICES)) {
-    debugln("EEPROM memory failed, intializing default values");
+    println(FAILED, "EEPROM memory failed, intializing default values");
     initMemory();
     breakSeal();
+  } else {
+    println(PASSED, "EEPROM memory success");
   }
   if ((mem.mem.programVersionMinor != PROGRAM_VERSION_MINOR)) {
     mem.mem.programVersionMinor = PROGRAM_VERSION_MINOR;
     breakSeal();
   }
-  if (!connected) debugln("EEPROM Not Connected");
+  if (!connected) println(ERROR, "EEPROM Not Connected");
   gpio->setOnline(I2C_EEPROM, connected);
-  debug("Memory Complete: PRG Num: ");
-  debug(String(mem.mem.programNumber));
-  debug(" PRG Ver: ");
-  debug(String(mem.mem.programVersionMajor));
-  debug(".");
-  debug(String(mem.mem.programVersionMinor));
-  debug(" Num Dev: ");
-  debugln(String(mem.mem.numberOfDevices));
+  String memoryString = "Memory Complete: PRG Num: " + String(mem.mem.programNumber) + " PRG Ver: " + String(mem.mem.programVersionMajor) + "." + String(mem.mem.programVersionMinor) + " Num Dev: " + String(mem.mem.numberOfDevices);
+  println((connected) ? PASSED : FAILED, memoryString);
 }
 
 void EEpromMemory::loop() {
@@ -116,25 +112,25 @@ byte EEpromMemory::readEEPROMbyte(unsigned int address) {
 }
 
 void EEpromMemory::writeEEPROMbyte(unsigned int address, byte value) {
-  if (!eeprom->updateByteVerify(address, value) && connected) debugln("Error in Writing EEPROM");
+  if (!eeprom->updateByteVerify(address, value) && connected) println(ERROR, "Error in Writing EEPROM");
 }
 
 void EEpromMemory::readEEPROM() {
   if (connected) {
     wireMutex->take();
     memMutex->take();
-    //debugln("Reading EEPROM");
+    //println("Reading EEPROM");
     for (unsigned int index = 0; index < sizeof(MemoryStruct); index++) {
       //if (index % 16 == 0) {
-      //  debug(String(index, HEX));
-      //  debug(": ");
+      //  print(String(index, HEX));
+      //  print(": ");
       //}
       mem.memoryArray[index] = readEEPROMbyte(index);
-      //debug(String(mem.memoryArray[index], HEX));
-      //debug("  ");
-      //if (index % 16 == 15) debugln();
+      //print(String(mem.memoryArray[index], HEX));
+      //print("  ");
+      //if (index % 16 == 15) println();
     }
-    //debugln();
+    //println();
     memMutex->give();
     wireMutex->give();
   }
@@ -144,18 +140,18 @@ void EEpromMemory::writeEEPROM() {
   if (connected) {
     wireMutex->take();
     memMutex->take();
-    //debugln("Writing EEPROM");
+    //println("Writing EEPROM");
     for (unsigned int index = 0; index < sizeof(MemoryStruct); index++) {
       //if (index % 16 == 0) {
-      //  debug(String(index, HEX));
-      //  debug(": ");
+      //  print(String(index, HEX));
+      //  print(": ");
       //}
       writeEEPROMbyte(index, mem.memoryArray[index]);
-      //debug(String(mem.memoryArray[index], HEX));
-      //debug("  ");
-      //if (index % 16 == 15) debugln();
+      //print(String(mem.memoryArray[index], HEX));
+      //print("  ");
+      //if (index % 16 == 15) println();
     }
-    //debugln();
+    //println();
     memMutex->give();
     wireMutex->give();
   }
